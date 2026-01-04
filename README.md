@@ -15,9 +15,22 @@ A browser-based shader and VFX playground built with React Three Fiber and Three
 - Post-processing presets (bloom, vignette, chromatic aberration) for “dark fantasy” looks.
 
 ## Current repo state
-This repository is in a **design + planning** state. The documents in `docs/` define the architecture, schemas, and milestones to reach a production-ready, always-runnable web app.
+This repository now ships with the Phase 1 scaffold: a Next.js (App Router) + React Three Fiber scene that boots with a procedural fallback, an orbit camera rig, an FX control panel, and upload support.
 
 For implementation guidance and coding standards, start with `AGENTS.md` and `docs/services.md` to keep contributions modular, service-driven, and free from ad-hoc string literals.
+
+## Getting started
+
+1. Install dependencies: `npm install`
+2. Run the dev server: `npm run dev`
+3. Open the app at `http://localhost:3000`
+
+## Phase 1 scaffold
+
+- Renders a procedural fallback mesh and stylized lighting so the scene always works without external assets.
+- Provides an upload dropzone that accepts GLB/GLTF and reverts to the fallback on errors.
+- Includes emissive/rim material presets plus bloom and vignette post-processing.
+- Ships with a Leva-powered FX panel and Zustand store to tweak bloom/vignette and toggle a performance overlay without code changes.
 
 ## Roadmap snapshot
 - **Phase 1 (bootstrap)**: Next.js + R3F scene, GLB upload, camera controls, basic lighting, emissive/rim presets, bloom postprocess. Always keep a fallback model/scene for when no asset is uploaded.
