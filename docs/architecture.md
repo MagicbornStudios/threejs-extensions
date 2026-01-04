@@ -36,6 +36,17 @@ public/
   fallback-assets/         # Default GLB, HDRI, textures for always-runnable scenes
 ```
 
+## Service layer and module boundaries
+- Treat **services as API surfaces** consumed by the UI: pure or side-effect-light modules that expose async functions, return typed results, and never reach into view internals.
+- Example service categories:
+  - `AssetService`: upload/load GLB/GLTF, manage HDRI/texture assets, and provide fallbacks when a request fails.
+  - `MaterialService`: create/update/compile material graphs, expose preset catalogs, and surface validation results.
+  - `FxService`: manage emitters/systems, run simulations, and expose performance-safe defaults.
+  - `SceneService`: orchestrate bindings between models, materials, FX, and post-processing profiles.
+- Prefer **dependency injection** for services in React components (context providers/hooks) so tests can swap implementations.
+- Avoid raw string keys in services; surface enums or literal unions for identifiers (e.g., material variants, module kinds).
+- Keep the app **ready-to-use without login**: service calls must work for anonymous users and fall back to offline-safe defaults.
+
 ## Authoring models (JSON)
 
 ### Material graph

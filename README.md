@@ -3,6 +3,7 @@
 A browser-based shader and VFX playground built with React Three Fiber and Three.js, inspired by Unreal Niagara and Amplify Shader Editor. The guiding principles are:
 
 - **Always runnable in the browser**: every milestone ships with a working scene and safe fallbacks.
+- **Zero-friction access**: no authentication required; the editor loads with a ready-to-use fallback scene.
 - **Editor-first authoring**: node graphs + inline shader code with live preview.
 - **Future-friendly exports**: keep your high-fidelity graphs in JSON, and target glTF/MaterialX where possible.
 
@@ -15,6 +16,8 @@ A browser-based shader and VFX playground built with React Three Fiber and Three
 
 ## Current repo state
 This repository is in a **design + planning** state. The documents in `docs/` define the architecture, schemas, and milestones to reach a production-ready, always-runnable web app.
+
+For implementation guidance and coding standards, start with `AGENTS.md` and `docs/services.md` to keep contributions modular, service-driven, and free from ad-hoc string literals.
 
 ## Roadmap snapshot
 - **Phase 1 (bootstrap)**: Next.js + R3F scene, GLB upload, camera controls, basic lighting, emissive/rim presets, bloom postprocess. Always keep a fallback model/scene for when no asset is uploaded.
