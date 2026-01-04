@@ -33,7 +33,7 @@ lib/
   export/                  # glTF + MaterialX + JSON writers
   state/                   # Zustand slices and selectors
 public/
-  fallback-assets/         # Default GLB, HDRI, textures for always-runnable scenes
+  fallback-assets/         # (Placeholder) fallback slots; current build uses procedural shapes for always-runnable scenes
 ```
 
 ## Service layer and module boundaries
