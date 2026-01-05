@@ -4,22 +4,28 @@ import { Suspense, useMemo, useRef } from 'react';
 import { useGLTF } from '@react-three/drei';
 import { ObjectMap, useFrame } from '@react-three/fiber';
 import type { GLTF } from 'three/examples/jsm/loaders/GLTFLoader.js';
-import { DoubleSide, Group, Mesh, MeshPhysicalMaterial, Object3D } from 'three';
+import { DoubleSide, Group, Mesh, MeshPhysicalMaterial, Object3D, Material } from 'three';
 import { easing } from 'maath';
 import { MATERIAL_PRESETS, type MaterialPreset, type MaterialPresetId } from '@/models/materialPresets';
 import type { ModelSource } from '@/services/modelSource';
-
-interface ModelStageProps {
-  readonly source: ModelSource;
-  readonly materialPresetId: MaterialPresetId;
-}
+import { useMaterialGraphStore } from '@/stores/materialGraph';
 
 type GltfModelProps = {
   readonly source: Extract<ModelSource, { kind: 'gltf' }>;
   readonly materialPresetId: MaterialPresetId;
 };
 
-function applyMaterialPreset(mesh: Mesh, preset: MaterialPreset): void {
+interface ModelStageProps {
+  readonly source: ModelSource;
+  readonly materialPresetId: MaterialPresetId;
+}
+
+function applyMaterialPreset(mesh: Mesh, preset: MaterialPreset, overrideMaterial?: Material): void {
+  if (overrideMaterial) {
+    mesh.material = overrideMaterial;
+    return;
+  }
+
   const material = (mesh.material as MeshPhysicalMaterial).clone();
   material.color.set(preset.baseColor);
   material.metalness = preset.metalness ?? material.metalness;
@@ -38,11 +44,11 @@ function applyMaterialPreset(mesh: Mesh, preset: MaterialPreset): void {
   mesh.material = material;
 }
 
-function materializeScene(scene: Object3D, preset: MaterialPreset): Object3D {
+function materializeScene(scene: Object3D, preset: MaterialPreset, overrideMaterial?: Material): Object3D {
   const clone = scene.clone(true);
   clone.traverse((child) => {
     if ((child as Mesh).isMesh) {
-      applyMaterialPreset(child as Mesh, preset);
+      applyMaterialPreset(child as Mesh, preset, overrideMaterial);
     }
   });
   return clone;
@@ -74,15 +80,22 @@ function GltfModel({ source, materialPresetId }: GltfModelProps) {
   const gltf = useGLTF(source.url) as unknown as LoadedGLTF;
   const preset = MATERIAL_PRESETS[materialPresetId];
   const groupRef = useRef<Group>(null);
+  const compiledMaterial = useMaterialGraphStore((state) => state.compiledMaterial);
+  const selectedNodeId = useMaterialGraphStore((state) => state.selectedNodeId);
 
-  const prepared = useMemo(() => materializeScene(gltf.scene, preset), [gltf.scene, preset]);
+  const prepared = useMemo(
+    () => materializeScene(gltf.scene, preset, compiledMaterial),
+    [compiledMaterial, gltf.scene, preset],
+  );
 
   useFrame((state, delta) => {
     if (!groupRef.current) {
       return;
     }
 
+    const selectionScale = selectedNodeId ? 1.06 : 1;
     easing.dampE(groupRef.current.rotation, [0, state.clock.elapsedTime * 0.15, 0], 0.18, delta);
+    easing.damp3(groupRef.current.scale, [selectionScale, selectionScale, selectionScale], 0.2, delta);
   });
 
   return (
@@ -95,7 +108,16 @@ function GltfModel({ source, materialPresetId }: GltfModelProps) {
 function ProceduralFallback({ materialPresetId }: { materialPresetId: MaterialPresetId }) {
   const preset = MATERIAL_PRESETS[materialPresetId];
   const groupRef = useRef<Group>(null);
-  const material = useMemo(() => createMaterialForPreset(preset), [preset]);
+  const compiledMaterial = useMaterialGraphStore((state) => state.compiledMaterial);
+  const selectedNodeId = useMaterialGraphStore((state) => state.selectedNodeId);
+  const material = useMemo(() => {
+    if (compiledMaterial) {
+      const clone = compiledMaterial.clone();
+      clone.side = DoubleSide;
+      return clone;
+    }
+    return createMaterialForPreset(preset);
+  }, [compiledMaterial, preset]);
 
   useFrame((state, delta) => {
     if (!groupRef.current) {
@@ -108,7 +130,9 @@ function ProceduralFallback({ materialPresetId }: { materialPresetId: MaterialPr
       Math.cos(state.clock.elapsedTime * 0.25) * 0.25,
     ];
     easing.dampE(groupRef.current.rotation, targetRotation, 0.18, delta);
+    const selectionScale = selectedNodeId ? 1.08 : 1;
     easing.damp3(groupRef.current.position, [0, 0.15, 0], 0.18, delta);
+    easing.damp3(groupRef.current.scale, [selectionScale, selectionScale, selectionScale], 0.2, delta);
   });
 
   return (
