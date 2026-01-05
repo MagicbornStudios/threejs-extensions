@@ -1,13 +1,23 @@
-type HostedModelKind = 'gltf' | 'fbx';
+export type GltfModelSource = {
+  readonly kind: 'gltf';
+  readonly url: string;
+  readonly label: string;
+  readonly isFallback: false;
+  readonly objectUrl?: string;
+};
+
+export type FbxModelSource = {
+  readonly kind: 'fbx';
+  readonly url: string;
+  readonly label: string;
+  readonly isFallback: false;
+  readonly objectUrl?: string;
+};
+
+export type HostedModelSource = GltfModelSource | FbxModelSource;
 
 export type ModelSource =
-  | {
-      readonly kind: HostedModelKind;
-      readonly url: string;
-      readonly label: string;
-      readonly isFallback: false;
-      readonly objectUrl?: string;
-    }
+  | HostedModelSource
   | {
       readonly kind: 'primitive';
       readonly label: string;
@@ -31,7 +41,7 @@ const fbxMimeTypes = new Set<string>([
 
 export const ACCEPTED_EXTENSIONS: readonly string[] = ['.glb', '.gltf', '.fbx'];
 
-function resolveModelKind(file: File): HostedModelKind | null {
+function resolveModelKind(file: File): HostedModelSource['kind'] | null {
   const lowerName = file.name.toLowerCase();
 
   if (lowerName.endsWith('.fbx')) {
@@ -59,20 +69,31 @@ export function isValidModelFile(file: File): boolean {
   return resolveModelKind(file) !== null;
 }
 
-export function createModelSourceFromFile(file: File): ModelSource | null {
+export function createModelSourceFromFile(file: File): HostedModelSource | null {
   const kind = resolveModelKind(file);
   if (!kind) {
     return null;
   }
 
   const objectUrl = URL.createObjectURL(file);
+
+  if (kind === 'gltf') {
+    return {
+      kind,
+      url: objectUrl,
+      objectUrl,
+      label: file.name,
+      isFallback: false,
+    } satisfies GltfModelSource;
+  }
+
   return {
     kind,
     url: objectUrl,
     objectUrl,
     label: file.name,
     isFallback: false,
-  };
+  } satisfies FbxModelSource;
 }
 
 export function createFallbackModelSource(): ModelSource {

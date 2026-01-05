@@ -21,5 +21,6 @@ These rules apply to the entire repository unless a deeper directory adds more s
 ## Testing and quality
 - Add unit tests for service modules and compilers when touching logic; keep docs updated alongside behavior changes.
 - Follow repository documentation conventions when adding new guides or references.
+- Always run builds and make sure compilation is good before concluding changes.
 
 When in doubt, favor maintainability, explicitness, and composability.
