@@ -4,6 +4,8 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { DEFAULT_MATERIAL_PRESET_ID, MATERIAL_PRESETS, type MaterialPresetId } from '@/models/materialPresets';
 import { UploadDropzone } from '@/components/ui/UploadDropzone';
 import { EffectsControlPanel, ResetEffectsButton } from '@/components/ui/EffectsControlPanel';
+import { ShaderEditor } from '@/components/shader-editor/ShaderEditor';
+import { MaterialSelectionBadge } from '@/components/ui/MaterialSelectionBadge';
 import {
   ACCEPTED_EXTENSIONS,
   createFallbackModelSource,
@@ -105,9 +107,24 @@ export default function HomePage() {
           <ResetEffectsButton />
         </section>
 
-        <section className="canvas-panel">
-          <SceneCanvas modelSource={modelSource} materialPresetId={materialPresetId} onModelError={handleModelError} />
-        </section>
+        <div className="workspace">
+          <section className="canvas-panel">
+            <SceneCanvas modelSource={modelSource} materialPresetId={materialPresetId} onModelError={handleModelError} />
+            <div className="canvas-overlay">
+              <MaterialSelectionBadge />
+            </div>
+          </section>
+
+          <section className="panel shader-panel">
+            <div className="panel-header">
+              <div>
+                <h3>Shader Graph</h3>
+                <p>React Flow + Monaco with defaults when links are missing.</p>
+              </div>
+            </div>
+            <ShaderEditor />
+          </section>
+        </div>
       </main>
     </div>
   );
