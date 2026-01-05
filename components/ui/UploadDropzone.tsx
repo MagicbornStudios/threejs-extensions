@@ -13,9 +13,14 @@ export function UploadDropzone({ onFileAccepted, onReject, acceptedExtensions }:
   const accept = useMemo(
     () => ({
       'model/gltf-binary': acceptedExtensions,
+      'model/gltf+binary': acceptedExtensions,
       'model/gltf+json': acceptedExtensions,
       'model/gltf': acceptedExtensions,
       'application/octet-stream': acceptedExtensions,
+      'application/fbx': acceptedExtensions,
+      'application/vnd.autodesk.fbx': acceptedExtensions,
+      'application/x-autodesk-fbx': acceptedExtensions,
+      'application/x-fbx': acceptedExtensions,
     }),
     [acceptedExtensions],
   );
@@ -37,7 +42,7 @@ export function UploadDropzone({ onFileAccepted, onReject, acceptedExtensions }:
   return (
     <div className={`dropzone ${isDragActive ? 'is-active' : ''}`} {...getRootProps()}>
       <input {...getInputProps()} />
-      <h3>Drop a GLB/GLTF file</h3>
+      <h3>Drop a GLB, GLTF, or FBX file</h3>
       <p>Drag a model here or click to browse. The viewer will fall back to the default asset on failure.</p>
     </div>
   );

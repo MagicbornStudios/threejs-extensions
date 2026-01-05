@@ -2,9 +2,10 @@
 
 import { Suspense, useMemo, useRef } from 'react';
 import { useGLTF } from '@react-three/drei';
-import { ObjectMap, useFrame } from '@react-three/fiber';
+import { ObjectMap, useFrame, useLoader } from '@react-three/fiber';
 import type { GLTF } from 'three/examples/jsm/loaders/GLTFLoader.js';
-import { DoubleSide, Group, Mesh, MeshPhysicalMaterial, Object3D, Material } from 'three';
+import { DoubleSide, Group, Mesh, MeshPhysicalMaterial, Object3D, type Material } from 'three';
+import { FBXLoader } from 'three-stdlib';
 import type { MeshPhysicalNodeMaterial } from 'three/examples/jsm/nodes/materials/MeshPhysicalNodeMaterial.js';
 import { easing } from 'maath';
 import { MATERIAL_PRESETS, type MaterialPreset, type MaterialPresetId } from '@/models/materialPresets';
@@ -13,6 +14,11 @@ import { useMaterialGraphStore } from '@/stores/materialGraph';
 
 type GltfModelProps = {
   readonly source: Extract<ModelSource, { kind: 'gltf' }>;
+  readonly materialPresetId: MaterialPresetId;
+};
+
+type FbxModelProps = {
+  readonly source: Extract<ModelSource, { kind: 'fbx' }>;
   readonly materialPresetId: MaterialPresetId;
 };
 
@@ -108,6 +114,36 @@ function GltfModel({ source, materialPresetId }: GltfModelProps) {
   );
 }
 
+function FbxModel({ source, materialPresetId }: FbxModelProps) {
+  const object = useLoader(FBXLoader, source.url);
+  const preset = MATERIAL_PRESETS[materialPresetId];
+  const groupRef = useRef<Group>(null);
+
+  const compiledMaterial = useMaterialGraphStore((state) => state.compiledMaterial);
+  const selectedNodeId = useMaterialGraphStore((state) => state.selectedNodeId);
+
+  const prepared = useMemo(
+    () => materializeScene(object, preset, compiledMaterial),
+    [compiledMaterial, object, preset],
+  );
+
+  useFrame((state, delta) => {
+    if (!groupRef.current) {
+      return;
+    }
+
+    const selectionScale = selectedNodeId ? 1.06 : 1;
+    easing.dampE(groupRef.current.rotation, [0, state.clock.elapsedTime * 0.15, 0], 0.18, delta);
+    easing.damp3(groupRef.current.scale, [selectionScale, selectionScale, selectionScale], 0.2, delta);
+  });
+
+  return (
+    <group ref={groupRef} dispose={null}>
+      <primitive object={prepared} />
+    </group>
+  );
+}
+
 function ProceduralFallback({ materialPresetId }: { materialPresetId: MaterialPresetId }) {
   const preset = MATERIAL_PRESETS[materialPresetId];
   const groupRef = useRef<Group>(null);
@@ -154,7 +190,11 @@ export function ModelStage({ source, materialPresetId }: ModelStageProps) {
 
   return (
     <Suspense fallback={null}>
-      <GltfModel source={source} materialPresetId={materialPresetId} />
+      {source.kind === 'gltf' ? (
+        <GltfModel source={source} materialPresetId={materialPresetId} />
+      ) : (
+        <FbxModel source={source} materialPresetId={materialPresetId} />
+      )}
     </Suspense>
   );
 }
