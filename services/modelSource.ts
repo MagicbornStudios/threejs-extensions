@@ -1,9 +1,11 @@
+type HostedModelKind = 'gltf' | 'fbx';
+
 export type ModelSource =
   | {
-      readonly kind: 'gltf';
+      readonly kind: HostedModelKind;
       readonly url: string;
       readonly label: string;
-      readonly isFallback: boolean;
+      readonly isFallback: false;
       readonly objectUrl?: string;
     }
   | {
@@ -12,32 +14,60 @@ export type ModelSource =
       readonly isFallback: true;
     };
 
-const acceptedMimeTypes = new Set<string>([
+const gltfMimeTypes = new Set<string>([
   'model/gltf-binary',
   'model/gltf+json',
   'model/gltf+binary',
   'model/gltf',
+]);
+
+const fbxMimeTypes = new Set<string>([
+  'application/fbx',
+  'application/vnd.autodesk.fbx',
+  'application/x-autodesk-fbx',
+  'application/x-fbx',
   'application/octet-stream',
 ]);
 
-const acceptedExtensions = ['.glb', '.gltf'];
+export const ACCEPTED_EXTENSIONS: readonly string[] = ['.glb', '.gltf', '.fbx'];
+
+function resolveModelKind(file: File): HostedModelKind | null {
+  const lowerName = file.name.toLowerCase();
+
+  if (lowerName.endsWith('.fbx')) {
+    return 'fbx';
+  }
+
+  if (lowerName.endsWith('.glb') || lowerName.endsWith('.gltf')) {
+    return 'gltf';
+  }
+
+  if (file.type !== '') {
+    if (gltfMimeTypes.has(file.type)) {
+      return 'gltf';
+    }
+
+    if (fbxMimeTypes.has(file.type)) {
+      return 'fbx';
+    }
+  }
+
+  return null;
+}
 
 export function isValidModelFile(file: File): boolean {
-  const lowerName = file.name.toLowerCase();
-  return (
-    acceptedExtensions.some((ext) => lowerName.endsWith(ext)) ||
-    (file.type !== '' && acceptedMimeTypes.has(file.type))
-  );
+  return resolveModelKind(file) !== null;
 }
 
 export function createModelSourceFromFile(file: File): ModelSource | null {
-  if (!isValidModelFile(file)) {
+  const kind = resolveModelKind(file);
+  if (!kind) {
     return null;
   }
 
   const objectUrl = URL.createObjectURL(file);
   return {
-    kind: 'gltf',
+    kind,
     url: objectUrl,
     objectUrl,
     label: file.name,

@@ -5,14 +5,13 @@ import { DEFAULT_MATERIAL_PRESET_ID, MATERIAL_PRESETS, type MaterialPresetId } f
 import { UploadDropzone } from '@/components/ui/UploadDropzone';
 import { EffectsControlPanel, ResetEffectsButton } from '@/components/ui/EffectsControlPanel';
 import {
+  ACCEPTED_EXTENSIONS,
   createFallbackModelSource,
   createModelSourceFromFile,
   releaseModelSource,
   type ModelSource,
 } from '@/services/modelSource';
 import { SceneCanvas } from '@/components/canvas/SceneCanvas';
-
-const ACCEPTED_EXTENSIONS: readonly string[] = ['.glb', '.gltf'];
 
 type StatusKind = 'idle' | 'loaded' | 'fallback' | 'rejected';
 
@@ -22,10 +21,10 @@ interface StatusMessage {
 }
 
 const statusCopy: Record<StatusKind, string> = {
-  idle: 'Drop a GLB/GLTF file to preview. A procedural fallback mesh renders by default.',
+  idle: 'Drop a GLB/GLTF/FBX file to preview. A procedural fallback mesh renders by default.',
   loaded: 'Custom model loaded successfully.',
   fallback: 'Encountered an issue. Reverted to the procedural fallback.',
-  rejected: 'That file type is not supported. Please provide a GLB or GLTF.',
+  rejected: 'That file type is not supported. Please provide a GLB, GLTF, or FBX.',
 };
 
 export default function HomePage() {

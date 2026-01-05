@@ -88,7 +88,7 @@ export function SceneCanvas({ modelSource, materialPresetId, onModelError }: Sce
         </Environment>
       </Suspense>
       <ModelErrorBoundary
-        resetKeys={[modelSource.kind === 'gltf' ? modelSource.url : modelSource.label, presetLabel]}
+        resetKeys={[modelSource.kind === 'primitive' ? modelSource.label : modelSource.url, presetLabel]}
         onError={onModelError}
       >
         <ModelStage source={modelSource} materialPresetId={materialPresetId} />

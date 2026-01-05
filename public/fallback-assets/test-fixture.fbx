@@ -1,0 +1,7 @@
+; FBX 7.4.0 project file
+; Minimal ASCII FBX for loader smoke tests
+FBXHeaderExtension:  {
+  FBXHeaderVersion: 1003
+  FBXVersion: 7400
+  Creator: "threejs-extensions test fixture"
+}
