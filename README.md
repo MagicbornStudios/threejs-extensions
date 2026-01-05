@@ -25,6 +25,14 @@ For implementation guidance and coding standards, start with `AGENTS.md` and `do
 2. Run the dev server: `npm run dev`
 3. Open the app at `http://localhost:3000`
 
+## Testing
+
+- Run unit tests (services, compilers, presets): `npm run test:unit`
+- Run Playwright smoke tests (starts the dev server automatically): `npm run test:e2e`
+- Run both suites: `npm test`
+
+Model upload tests rely on fixtures in `tests/fixtures/models`, including `Box.glb` and a small placeholder FBX.
+
 ## Phase 1 scaffold
 
 - Renders a procedural fallback mesh and stylized lighting so the scene always works without external assets.
