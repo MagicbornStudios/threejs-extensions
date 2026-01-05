@@ -2,9 +2,10 @@
 
 import { Suspense, useMemo, useRef } from 'react';
 import { useGLTF } from '@react-three/drei';
-import { ObjectMap, useFrame } from '@react-three/fiber';
+import { ObjectMap, useFrame, useLoader } from '@react-three/fiber';
 import type { GLTF } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { DoubleSide, Group, Mesh, MeshPhysicalMaterial, Object3D, Material } from 'three';
+import { FBXLoader } from 'three-stdlib';
 import { easing } from 'maath';
 import { MATERIAL_PRESETS, type MaterialPreset, type MaterialPresetId } from '@/models/materialPresets';
 import type { ModelSource } from '@/services/modelSource';
@@ -26,6 +27,12 @@ function applyMaterialPreset(mesh: Mesh, preset: MaterialPreset, overrideMateria
     return;
   }
 
+type FbxModelProps = {
+  readonly source: Extract<ModelSource, { kind: 'fbx' }>;
+  readonly materialPresetId: MaterialPresetId;
+};
+
+function applyMaterialPreset(mesh: Mesh, preset: MaterialPreset): void {
   const material = (mesh.material as MeshPhysicalMaterial).clone();
   material.color.set(preset.baseColor);
   material.metalness = preset.metalness ?? material.metalness;
@@ -105,6 +112,28 @@ function GltfModel({ source, materialPresetId }: GltfModelProps) {
   );
 }
 
+function FbxModel({ source, materialPresetId }: FbxModelProps) {
+  const object = useLoader(FBXLoader, source.url);
+  const preset = MATERIAL_PRESETS[materialPresetId];
+  const groupRef = useRef<Group>(null);
+
+  const prepared = useMemo(() => materializeScene(object, preset), [object, preset]);
+
+  useFrame((state, delta) => {
+    if (!groupRef.current) {
+      return;
+    }
+
+    easing.dampE(groupRef.current.rotation, [0, state.clock.elapsedTime * 0.15, 0], 0.18, delta);
+  });
+
+  return (
+    <group ref={groupRef} dispose={null}>
+      <primitive object={prepared} />
+    </group>
+  );
+}
+
 function ProceduralFallback({ materialPresetId }: { materialPresetId: MaterialPresetId }) {
   const preset = MATERIAL_PRESETS[materialPresetId];
   const groupRef = useRef<Group>(null);
@@ -151,7 +180,11 @@ export function ModelStage({ source, materialPresetId }: ModelStageProps) {
 
   return (
     <Suspense fallback={null}>
-      <GltfModel source={source} materialPresetId={materialPresetId} />
+      {source.kind === 'gltf' ? (
+        <GltfModel source={source} materialPresetId={materialPresetId} />
+      ) : (
+        <FbxModel source={source} materialPresetId={materialPresetId} />
+      )}
     </Suspense>
   );
 }
