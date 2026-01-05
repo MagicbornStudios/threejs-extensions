@@ -1,10 +1,10 @@
-import { Color, DoubleSide, MeshPhysicalMaterial, Vector3 } from 'three';
+import { Color, DoubleSide, MeshPhysicalMaterial } from 'three';
 import {
   abs,
   add,
   clamp,
   float,
-  glsl,
+  glslFn,
   MeshPhysicalNodeMaterial,
   mix,
   mul,
@@ -47,14 +47,6 @@ interface ResolutionContext {
   readonly diagnostics: string[];
 }
 
-function ensureVec3(input: Vector3 | [number, number, number]): [number, number, number] {
-  if (Array.isArray(input)) {
-    return input;
-  }
-
-  return [input.x, input.y, input.z];
-}
-
 function literalForSocket(value: number | [number, number] | [number, number, number], socketType: SocketType) {
   if (socketType === SocketType.Vec2 && Array.isArray(value) && value.length === 2) {
     return vec2(value[0], value[1]);
@@ -69,17 +61,6 @@ function literalForSocket(value: number | [number, number] | [number, number, nu
   }
 
   return float(value as number);
-}
-
-function sanitizeSnippet(codeText: string, primary: Vector3, secondary: Vector3): string {
-  const primaryValue = ensureVec3(primary);
-  const secondaryValue = ensureVec3(secondary);
-  const primaryLiteral = `vec3(${primaryValue[0].toFixed(3)}, ${primaryValue[1].toFixed(3)}, ${primaryValue[2].toFixed(3)})`;
-  const secondaryLiteral = `vec3(${secondaryValue[0].toFixed(3)}, ${secondaryValue[1].toFixed(3)}, ${secondaryValue[2].toFixed(3)})`;
-  return codeText
-    .replace(/primary/g, primaryLiteral)
-    .replace(/secondary/g, secondaryLiteral)
-    .replace(/uv\b/g, 'vec2(0.0, 0.0)');
 }
 
 function resolveEdge(context: ResolutionContext, nodeId: string, handle: MaterialPortKey) {
@@ -210,12 +191,12 @@ function resolveCodeNode(context: ResolutionContext, node: CodeNodeData) {
   const primaryInput = (resolveEdge(context, node.id, MATERIAL_PORT_KEYS.primary) ?? vec3(1, 0.8, 0.6)) as any;
   const secondaryInput = (resolveEdge(context, node.id, MATERIAL_PORT_KEYS.secondary) ?? vec3(0.4, 0.5, 0.8)) as any;
 
-  const fallbackPrimary = new Vector3(1, 0.8, 0.6);
-  const fallbackSecondary = new Vector3(0.5, 0.6, 0.9);
-  const safeSnippet = sanitizeSnippet(node.glsl, fallbackPrimary, fallbackSecondary);
-  const previewNode = glsl(`vec3 shade = vec3(0.0);\n${safeSnippet}`);
+  const shadeFunction = glslFn(
+    `vec3 shadeNode(vec3 primary, vec3 secondary, vec2 uv) {\n${node.glsl}\n}`,
+  );
+  const shadeResult = shadeFunction(primaryInput, secondaryInput, uv());
 
-  return mix(primaryInput, secondaryInput, previewNode.mul(0.0).add(0.5));
+  return mix(primaryInput, secondaryInput, shadeResult);
 }
 
 function resolveOutputNode(
