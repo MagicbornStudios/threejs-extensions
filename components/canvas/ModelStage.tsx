@@ -35,6 +35,12 @@ function applyMaterialPreset(mesh: Mesh, preset: MaterialPreset, overrideMateria
     return;
   }
 
+type FbxModelProps = {
+  readonly source: Extract<ModelSource, { kind: 'fbx' }>;
+  readonly materialPresetId: MaterialPresetId;
+};
+
+function applyMaterialPreset(mesh: Mesh, preset: MaterialPreset): void {
   const material = (mesh.material as MeshPhysicalMaterial).clone();
   material.color.set(preset.baseColor);
   material.metalness = preset.metalness ?? material.metalness;
@@ -135,6 +141,28 @@ function FbxModel({ source, materialPresetId }: FbxModelProps) {
     const selectionScale = selectedNodeId ? 1.06 : 1;
     easing.dampE(groupRef.current.rotation, [0, state.clock.elapsedTime * 0.15, 0], 0.18, delta);
     easing.damp3(groupRef.current.scale, [selectionScale, selectionScale, selectionScale], 0.2, delta);
+  });
+
+  return (
+    <group ref={groupRef} dispose={null}>
+      <primitive object={prepared} />
+    </group>
+  );
+}
+
+function FbxModel({ source, materialPresetId }: FbxModelProps) {
+  const object = useLoader(FBXLoader, source.url);
+  const preset = MATERIAL_PRESETS[materialPresetId];
+  const groupRef = useRef<Group>(null);
+
+  const prepared = useMemo(() => materializeScene(object, preset), [object, preset]);
+
+  useFrame((state, delta) => {
+    if (!groupRef.current) {
+      return;
+    }
+
+    easing.dampE(groupRef.current.rotation, [0, state.clock.elapsedTime * 0.15, 0], 0.18, delta);
   });
 
   return (
